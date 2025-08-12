@@ -1,124 +1,100 @@
 
 
 import SwiftUI
+import UIKit // Needed for UIImage
 
-struct ContentView: View {
-    @State private var billAmount = ""
-    @State private var peopleInput = ""
-    @State private var tipInput = ""
-    @State private var receiptImage: UIImage?
-    
-    @State private var selectedSource: UIImagePickerController.SourceType?
-    @State private var showCameraAlert = false
-
-    var totalPerPerson: Double {
-        let amount = Double(billAmount) ?? 0
-        let peopleCount = Double(peopleInput) ?? 1
-        let tipAmount = parseTip(amount: amount)
-        guard peopleCount > 0 else { return 0 }
-        let grandTotal = amount + tipAmount
-        return grandTotal / peopleCount
-    }
-
-    func parseTip(amount: Double) -> Double {
-        let trimmed = tipInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.hasSuffix("%") {
-            let numberPart = trimmed.dropLast()
-            if let percent = Double(numberPart) {
-                return amount * percent / 100
-            }
-        }
-        return Double(trimmed) ?? 0
-    }
-    
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Bill Amount")) {
-                    TextField("Enter bill amount", text: $billAmount)
-                        .keyboardType(.decimalPad)
-                }
-
-                Section(header: Text("Number of People")) {
-                    TextField("Enter number of people", text: $peopleInput)
-                        .keyboardType(.numberPad)
-                }
-
-                Section(header: Text("Tip (amount or %)")) {
-                    TextField("e.g. 5 or 10%", text: $tipInput)
-                        .keyboardType(.default)
-                }
-
-                Section(header: Text("Amount Per Person")) {
-                    Text("$\(totalPerPerson, specifier: "%.2f")")
-                        .font(.largeTitle)
-                        .foregroundColor(.blue)
-                }
-
-                Section(header: Text("Receipt Photo")) {
-                    if let image = receiptImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 200)
-                            .cornerRadius(10)
-                    }
-
-                    // The new button UI
-                    HStack(spacing: 20) {
-                        Spacer()
-                        
-                        // Camera Button
-                        Button(action: {
-                            if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    self.selectedSource = .camera
-                                }
-                            } else {
-                                self.showCameraAlert = true
-                            }
-                        }) {
-                            Image(systemName: "camera.circle.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 50, height: 50)
-                                .foregroundColor(.blue)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        // Upload Button
-                        Button(action: {
-                            self.selectedSource = .photoLibrary
-                        }) {
-                            Image(systemName: "photo.circle.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 50, height: 50)
-                                .foregroundColor(.blue)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        Spacer()
-                    }
-                }
-            }
-            .navigationTitle("Tab Together")
-            
-            .sheet(item: $selectedSource) { sourceType in
-                ImagePicker(image: $receiptImage, sourceType: sourceType)
-            }
-            .alert(isPresented: $showCameraAlert) {
-                Alert(
-                    title: Text("Camera Not Available"),
-                    message: Text("This device has no camera."),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
-        }
-    }
-}
-
-// Ensure this extension is still in your project.
+// This extension is required for the .sheet(item:) modifier to work.
 extension UIImagePickerController.SourceType: Identifiable {
     public var id: Self { self }
 }
+
+struct ContentView: View {
+    @State private var receiptImage: UIImage?
+    @State private var selectedSource: UIImagePickerController.SourceType?
+    @State private var showReceiptInfo = false
+
+    var body: some View {
+        // Use NavigationStack as the main container for modern navigation
+        NavigationStack {
+            VStack(spacing: 40) {
+                
+                // Camera Button
+                Button(action: {
+                    if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                        self.selectedSource = .camera
+                    }
+                }) {
+                    VStack {
+                        Image(systemName: "camera.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(.blue)
+                        Text("Camera")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Photo Library Button
+                Button(action: {
+                    self.selectedSource = .photoLibrary
+                }) {
+                    VStack {
+                        Image(systemName: "photo.on.rectangle.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(.green)
+                        Text("Photo Library")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Manual Entry Button with NavigationLink
+                NavigationLink(destination: ManualEntryView()) {
+                    VStack {
+                        Image(systemName: "square.and.pencil")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(.orange)
+                        Text("Enter Manually")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .navigationTitle("Tab Together")
+            .navigationDestination(isPresented: $showReceiptInfo) {
+                // This will present the ReceiptInfoView when showReceiptInfo is true
+                if let image = receiptImage {
+                    ReceiptInfoView(receiptImage: image)
+                }
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+        .edgesIgnoringSafeArea(.all)
+        .sheet(item: $selectedSource) { sourceType in
+            ImagePicker(image: $receiptImage, sourceType: sourceType)
+        }
+        // This is a reliable way to trigger navigation after an image is selected
+        .onChange(of: receiptImage) { newImage in
+            if newImage != nil {
+                self.showReceiptInfo = true
+            }
+        }
+    }
+}
+
+// Preview Provider for Xcode
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
+}
+
