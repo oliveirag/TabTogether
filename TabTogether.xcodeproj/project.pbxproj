@@ -29,9 +29,22 @@
 		3CABC3D72E4BB40E0079E562 /* TabTogetherUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TabTogetherUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3C8E35072E4BCEAD00E1E44B /* Exceptions for "TabTogether" folder in "TabTogether" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3CABC3BB2E4BB40D0079E562 /* TabTogether */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3CABC3BE2E4BB40D0079E562 /* TabTogether */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3C8E35072E4BCEAD00E1E44B /* Exceptions for "TabTogether" folder in "TabTogether" target */,
+			);
 			path = TabTogether;
 			sourceTree = "<group>";
 		};
