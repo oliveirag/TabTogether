@@ -4,7 +4,7 @@ import SwiftUI
 import UIKit // Needed for UIImage
 
 // This extension is required for the .sheet(item:) modifier to work.
-extension UIImagePickerController.SourceType: Identifiable {
+extension UIImagePickerController.SourceType: @retroactive Identifiable {
     public var id: Self { self }
 }
 
@@ -52,8 +52,90 @@ struct ContentView: View {
     @State private var showFABMenu = false
     @State private var showSavedReceipts = false
     @State private var showManualEntry = false
+    @State private var selectedTab: Int = 0
     
     var body: some View {
+        TabView(selection: $selectedTab) {
+            // Home Tab
+            homeView
+                .tabItem {
+                    Image(systemName: "house")
+                    Text("Home")
+                }
+                .tag(0)
+            
+            // Saved Tab
+            savedTabView
+                .tabItem {
+                    Image(systemName: "heart")
+                    Text("Saved")
+                }
+                .tag(1)
+            
+            // Settings Tab
+            settingsTabView
+                .tabItem {
+                    Image(systemName: "gearshape")
+                    Text("Settings")
+                }
+                .tag(2)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            // Plus FAB - positioned to match Cal AI design
+            Button(action: {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    showFABMenu.toggle()
+                }
+            }) {
+                Image(systemName: showFABMenu ? "xmark" : "plus")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 50, height: 50)
+                    .background(Color.black)
+                    .clipShape(Circle())
+                    .rotationEffect(.degrees(showFABMenu ? 45 : 0))
+                    .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+            }
+            .padding(.trailing, 20)
+            .padding(.bottom, 90) // Above tab bar
+        }
+        .overlay(alignment: .bottomTrailing) {
+            // FAB Menu Items
+            if showFABMenu {
+                VStack(spacing: 16) {
+                    ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
+                        FABMenuItemView(option: option) {
+                            handleFABMenuSelection(option)
+                        }
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .trailing).combined(with: .opacity)
+                        ))
+                    }
+                }
+                .padding(.trailing, 120) // Adjusted for tab bar layout
+                .padding(.bottom, 200) // Above FAB button
+            }
+        }
+        .sheet(isPresented: $showSavedReceipts) {
+            SavedReceiptsView(bills: $bills)
+        }
+        .sheet(isPresented: $showManualEntry) {
+            ManualEntryView()
+        }
+        .sheet(item: $selectedSource, onDismiss: {
+            selectedSource = nil
+        }) { source in
+            ImagePicker(image: $receiptImage, sourceType: source)
+        }
+        .navigationDestination(isPresented: $showReceiptInfo) {
+            if let image = receiptImage {
+                ReceiptInfoView(receiptImage: image)
+            }
+        }
+    }
+    
+    private var homeView: some View {
         NavigationStack {
             GeometryReader { geometry in
                 ZStack {
@@ -74,67 +156,56 @@ struct ContentView: View {
                         .padding(.horizontal, 16)
                         .padding(.bottom, 100) // Space for FAB
                     }
-                    
-                    // FAB Menu Items - positioned to stay within screen bounds
-                    if showFABMenu {
-                        VStack(spacing: 16) {
-                            ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
-                                FABMenuItemView(option: option) {
-                                    handleFABMenuSelection(option)
-                                }
-                                .transition(.asymmetric(
-                                    insertion: .move(edge: .trailing).combined(with: .opacity),
-                                    removal: .move(edge: .trailing).combined(with: .opacity)
-                                ))
-                            }
-                        }
-                        .position(
-                            x: geometry.size.width - 120, // Ensure full menu width fits on screen
-                            y: geometry.size.height - geometry.safeAreaInsets.bottom - 300
-                        )
-                    }
-                    
-                    // Plus FAB - Fixed position, completely separate from menu
-                    Button(action: {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            showFABMenu.toggle()
-                        }
-                    }) {
-                        Image(systemName: showFABMenu ? "xmark" : "plus")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 56, height: 56)
-                            .background(Color.black)
-                            .clipShape(Circle())
-                            .rotationEffect(.degrees(showFABMenu ? 45 : 0))
-                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
-                    }
-                    .position(
-                        x: geometry.size.width - 48,
-                        y: geometry.size.height - geometry.safeAreaInsets.bottom - 90
-                    )
+
                 }
             }
             .navigationBarHidden(true)
-            .navigationDestination(isPresented: $showReceiptInfo) {
-                if let image = receiptImage {
-                    ReceiptInfoView(receiptImage: image)
-                }
-            }
-            .navigationDestination(isPresented: $showSavedReceipts) {
-                SavedReceiptsView(bills: $bills)
-            }
-            .navigationDestination(isPresented: $showManualEntry) {
-                ManualEntryView()
-            }
         }
-        .sheet(item: $selectedSource) { sourceType in
-            ImagePicker(image: $receiptImage, sourceType: sourceType)
-        }
-        .onChange(of: receiptImage) { _, newImage in
-            if newImage != nil {
-                showReceiptInfo = true
+    }
+    
+    private var savedTabView: some View {
+        NavigationStack {
+            VStack {
+                Spacer()
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.pink)
+                Text("Saved Receipts")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .padding(.top, 16)
+                Text("Your favorited receipts will appear here")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                Spacer()
             }
+            .navigationTitle("Saved")
+            .background(Color(.systemGroupedBackground))
+        }
+    }
+    
+    private var settingsTabView: some View {
+        NavigationStack {
+            VStack {
+                Spacer()
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.gray)
+                Text("Settings")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .padding(.top, 16)
+                Text("App settings and preferences will be available here")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                Spacer()
+            }
+            .navigationTitle("Settings")
+            .background(Color(.systemGroupedBackground))
         }
     }
     
