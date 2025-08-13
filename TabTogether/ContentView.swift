@@ -80,13 +80,24 @@ struct ContentView: View {
                     HStack {
                         Spacer()
                         
-                        ZStack {
-                            // FAB Menu Options
+                        ZStack(alignment: .bottom) {
+                            // FAB Menu Options - positioned above the button
                             if showFABMenu {
-                                fabMenuOverlay
+                                VStack(spacing: 16) {
+                                    ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
+                                        FABMenuItemView(option: option) {
+                                            handleFABMenuSelection(option)
+                                        }
+                                        .transition(.asymmetric(
+                                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                                            removal: .move(edge: .trailing).combined(with: .opacity)
+                                        ))
+                                    }
+                                }
+                                .padding(.bottom, 72) // Space above the FAB button
                             }
                             
-                            // Main FAB Button
+                            // Main FAB Button - always in same position
                             Button(action: {
                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                                     showFABMenu.toggle()
@@ -260,21 +271,7 @@ struct ContentView: View {
         }
     }
     
-    // MARK: - FAB Menu Overlay
-    private var fabMenuOverlay: some View {
-        VStack(spacing: 16) {
-            ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
-                FABMenuItemView(option: option) {
-                    handleFABMenuSelection(option)
-                }
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing).combined(with: .opacity),
-                    removal: .move(edge: .trailing).combined(with: .opacity)
-                ))
-            }
-        }
-        .offset(y: -80)
-    }
+
     
     // MARK: - Helper Functions
     private func toggleFavorite(for bill: Bill) {
