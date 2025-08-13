@@ -96,8 +96,8 @@ struct ContentView: View {
                     .rotationEffect(.degrees(showFABMenu ? 45 : 0))
                     .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
             }
-            .padding(.trailing, 20)
-            .padding(.bottom, 90) // Above tab bar
+            .padding(.trailing, 16)
+            .padding(.bottom, 100) // Above tab bar
         }
         .overlay(alignment: .bottomTrailing) {
             // FAB Menu Items
@@ -113,8 +113,8 @@ struct ContentView: View {
                         ))
                     }
                 }
-                .padding(.trailing, 120) // Adjusted for tab bar layout
-                .padding(.bottom, 200) // Above FAB button
+                .padding(.trailing, 16) // Match FAB alignment
+                .padding(.bottom, 210) // Above FAB button
             }
         }
         .sheet(isPresented: $showSavedReceipts) {
