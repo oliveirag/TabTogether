@@ -97,7 +97,7 @@ struct ContentView: View {
                     .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
             }
             .padding(.trailing, 16)
-            .padding(.bottom, 100) // Above tab bar
+            .padding(.bottom, 34) // Just above tab bar like Cal AI
         }
         .overlay(alignment: .bottomTrailing) {
             // FAB Menu Items
@@ -114,7 +114,7 @@ struct ContentView: View {
                     }
                 }
                 .padding(.trailing, 16) // Match FAB alignment
-                .padding(.bottom, 210) // Above FAB button
+                .padding(.bottom, 144) // Above FAB button (34 + 50 + 60 spacing)
             }
         }
         .sheet(isPresented: $showSavedReceipts) {
