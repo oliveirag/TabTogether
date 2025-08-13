@@ -1,0 +1,9 @@
+
+# Ignore Xcode-generated files and user data
+.DS_Store
+*.xcworkspace
+build/
+DerivedData/
+
+# Ignore sensitive files like Info.plist that contain API keys
+**/Info.plist
