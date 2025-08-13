@@ -75,7 +75,7 @@ struct ContentView: View {
                         .padding(.bottom, 100) // Space for FAB
                     }
                     
-                    // FAB Menu Items - positioned absolutely above the button
+                    // FAB Menu Items - positioned above the button, properly aligned
                     if showFABMenu {
                         VStack(spacing: 16) {
                             ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
@@ -89,7 +89,7 @@ struct ContentView: View {
                             }
                         }
                         .position(
-                            x: geometry.size.width - 48,
+                            x: geometry.size.width - 24, // Align right edge with screen edge (accounting for circular button)
                             y: geometry.size.height - geometry.safeAreaInsets.bottom - 300
                         )
                     }
@@ -306,28 +306,24 @@ struct FABMenuItemView: View {
     let action: () -> Void
     
     var body: some View {
-        HStack {
-            Spacer()
+        HStack(spacing: 12) {
+            Text(option.rawValue)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color(.systemBackground))
+                .cornerRadius(25)
+                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
             
-            HStack(spacing: 12) {
-                Text(option.rawValue)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(25)
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-                
-                Button(action: action) {
-                    Image(systemName: option.icon)
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 48, height: 48)
-                        .background(option.color)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
-                }
+            Button(action: action) {
+                Image(systemName: option.icon)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 48, height: 48)
+                    .background(option.color)
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
             }
         }
     }
