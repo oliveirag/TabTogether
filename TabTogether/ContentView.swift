@@ -75,7 +75,7 @@ struct ContentView: View {
                         .padding(.bottom, 100) // Space for FAB
                     }
                     
-                    // FAB Menu Items - positioned above the button, properly aligned
+                    // FAB Menu Items - positioned to stay within screen bounds
                     if showFABMenu {
                         VStack(spacing: 16) {
                             ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
@@ -89,7 +89,7 @@ struct ContentView: View {
                             }
                         }
                         .position(
-                            x: geometry.size.width - 24, // Align right edge with screen edge (accounting for circular button)
+                            x: geometry.size.width - 120, // Ensure full menu width fits on screen
                             y: geometry.size.height - geometry.safeAreaInsets.bottom - 300
                         )
                     }
