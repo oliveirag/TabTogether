@@ -55,67 +55,64 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Header
-                        headerView
-                        
-                        // Main Content Card
-                        mainContentCard
-                        
-                        // Recently Uploaded Section
-                        recentlyUploadedSection
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 100) // Space for FAB
-                }
-                
-                // Plus FAB
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        
-                        ZStack(alignment: .bottom) {
-                            // FAB Menu Options - positioned above the button
-                            if showFABMenu {
-                                VStack(spacing: 16) {
-                                    ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
-                                        FABMenuItemView(option: option) {
-                                            handleFABMenuSelection(option)
-                                        }
-                                        .transition(.asymmetric(
-                                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                                            removal: .move(edge: .trailing).combined(with: .opacity)
-                                        ))
-                                    }
-                                }
-                                .padding(.bottom, 72) // Space above the FAB button
-                            }
+            GeometryReader { geometry in
+                ZStack {
+                    Color(.systemGroupedBackground)
+                        .ignoresSafeArea()
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Header
+                            headerView
                             
-                            // Main FAB Button - always in same position
-                            Button(action: {
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                    showFABMenu.toggle()
+                            // Main Content Card
+                            mainContentCard
+                            
+                            // Recently Uploaded Section
+                            recentlyUploadedSection
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 100) // Space for FAB
+                    }
+                    
+                    // FAB Menu Items - positioned absolutely above the button
+                    if showFABMenu {
+                        VStack(spacing: 16) {
+                            ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
+                                FABMenuItemView(option: option) {
+                                    handleFABMenuSelection(option)
                                 }
-                            }) {
-                                Image(systemName: showFABMenu ? "xmark" : "plus")
-                                    .font(.system(size: 24, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 56, height: 56)
-                                    .background(Color.black)
-                                    .clipShape(Circle())
-                                    .rotationEffect(.degrees(showFABMenu ? 45 : 0))
-                                    .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                                    removal: .move(edge: .trailing).combined(with: .opacity)
+                                ))
                             }
                         }
+                        .position(
+                            x: geometry.size.width - 48,
+                            y: geometry.size.height - geometry.safeAreaInsets.bottom - 300
+                        )
                     }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 34)
+                    
+                    // Plus FAB - Fixed position, completely separate from menu
+                    Button(action: {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            showFABMenu.toggle()
+                        }
+                    }) {
+                        Image(systemName: showFABMenu ? "xmark" : "plus")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 56, height: 56)
+                            .background(Color.black)
+                            .clipShape(Circle())
+                            .rotationEffect(.degrees(showFABMenu ? 45 : 0))
+                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                    }
+                    .position(
+                        x: geometry.size.width - 48,
+                        y: geometry.size.height - geometry.safeAreaInsets.bottom - 90
+                    )
                 }
             }
             .navigationBarHidden(true)
