@@ -16,6 +16,32 @@ struct Bill: Identifiable {
     let participants: Int
     let thumbnail: UIImage?
     let title: String
+    var isFavorited: Bool = false
+}
+
+enum FABMenuOption: String, CaseIterable {
+    case scanReceipt = "Scan receipt"
+    case photoLibrary = "Photo library"
+    case enterManually = "Enter manually"
+    case savedReceipts = "Saved receipts"
+    
+    var icon: String {
+        switch self {
+        case .scanReceipt: return "camera.fill"
+        case .photoLibrary: return "photo.on.rectangle"
+        case .enterManually: return "square.and.pencil"
+        case .savedReceipts: return "heart.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .scanReceipt: return .blue
+        case .photoLibrary: return .green
+        case .enterManually: return .orange
+        case .savedReceipts: return .pink
+        }
+    }
 }
 
 struct ContentView: View {
@@ -23,216 +49,299 @@ struct ContentView: View {
     @State private var selectedSource: UIImagePickerController.SourceType?
     @State private var showReceiptInfo = false
     @State private var bills: [Bill] = [] // Will be populated from persistent storage later
+    @State private var showFABMenu = false
+    @State private var showSavedReceipts = false
+    @State private var showManualEntry = false
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // Main Content
-                VStack(spacing: 0) {
-                    if bills.isEmpty {
-                        // Empty State
-                        emptyStateView
-                    } else {
-                        // Bills List
-                        billsListView
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Header
+                        headerView
+                        
+                        // Main Content Card
+                        mainContentCard
+                        
+                        // Recently Uploaded Section
+                        recentlyUploadedSection
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 100) // Space for FAB
                 }
                 
-                // Floating Action Buttons
+                // Plus FAB
                 VStack {
                     Spacer()
                     HStack {
-                        // Gallery Button (bottom-left)
-                        FloatingActionButton(
-                            icon: "photo.on.rectangle",
-                            label: "Gallery",
-                            color: .green,
-                            position: .leading
-                        ) {
-                            selectedSource = .photoLibrary
-                        }
-                        
                         Spacer()
                         
-                        // Manual Entry Button (center-bottom)
-                        NavigationLink(destination: ManualEntryView()) {
-                            FloatingActionButton(
-                                icon: "square.and.pencil",
-                                label: "Manual",
-                                color: .orange,
-                                position: .center
-                            )
-                        }
-                        
-                        Spacer()
-                        
-                        // Camera Button (bottom-right)
-                        FloatingActionButton(
-                            icon: "camera.fill",
-                            label: "Camera",
-                            color: .blue,
-                            position: .trailing
-                        ) {
-                            if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                                selectedSource = .camera
+                        ZStack {
+                            // FAB Menu Options
+                            if showFABMenu {
+                                fabMenuOverlay
+                            }
+                            
+                            // Main FAB Button
+                            Button(action: {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    showFABMenu.toggle()
+                                }
+                            }) {
+                                Image(systemName: showFABMenu ? "xmark" : "plus")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 56, height: 56)
+                                    .background(Color.black)
+                                    .clipShape(Circle())
+                                    .rotationEffect(.degrees(showFABMenu ? 45 : 0))
+                                    .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
                             }
                         }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 34) // Account for safe area
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 34)
                 }
             }
-            .navigationTitle("TabTogether")
-            .navigationBarTitleDisplayMode(.large)
-            .background(Color(.systemGroupedBackground))
+            .navigationBarHidden(true)
             .navigationDestination(isPresented: $showReceiptInfo) {
                 if let image = receiptImage {
                     ReceiptInfoView(receiptImage: image)
                 }
             }
+            .navigationDestination(isPresented: $showSavedReceipts) {
+                SavedReceiptsView(bills: $bills)
+            }
+            .navigationDestination(isPresented: $showManualEntry) {
+                ManualEntryView()
+            }
         }
         .sheet(item: $selectedSource) { sourceType in
             ImagePicker(image: $receiptImage, sourceType: sourceType)
         }
-        .onChange(of: receiptImage) { newImage in
+        .onChange(of: receiptImage) { _, newImage in
             if newImage != nil {
                 showReceiptInfo = true
             }
         }
     }
     
-    // MARK: - Empty State View
-    private var emptyStateView: some View {
-        VStack(spacing: 32) {
-            Spacer()
-            
-            // Empty State Illustration
-            VStack(spacing: 16) {
-                Image(systemName: "doc.text.viewfinder")
-                    .font(.system(size: 80, weight: .thin))
-                    .foregroundColor(.secondary)
+    // MARK: - Header View
+    private var headerView: some View {
+        HStack {
+            // Logo placeholder and app title
+            HStack(spacing: 12) {
+                // Logo placeholder - will be replaced with actual logo later
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                            .overlay(
+                                Text("🧾")
+                                    .font(.system(size: 16))
+                            )
+                    )
                 
-                VStack(spacing: 8) {
-                    Text("No Bills Yet")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                Text("TabTogether")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+            }
+            
+            Spacer()
+        }
+        .padding(.top, 8)
+    }
+    
+    // MARK: - Main Content Card
+    private var mainContentCard: some View {
+        VStack(spacing: 20) {
+            if bills.isEmpty {
+                // Empty state content
+                VStack(spacing: 16) {
+                    Text("0")
+                        .font(.system(size: 72, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
                     
-                    Text("Start by capturing a receipt or entering bill details manually")
+                    Text("Bills split")
+                        .font(.title3)
+                        .foregroundColor(.secondary)
+                    
+                    // Visual element placeholder
+                    Circle()
+                        .stroke(Color.secondary.opacity(0.2), lineWidth: 8)
+                        .frame(width: 120, height: 120)
+                        .overlay(
+                            Image(systemName: "receipt")
+                                .font(.system(size: 40))
+                                .foregroundColor(.secondary.opacity(0.5))
+                        )
+                }
+            } else {
+                // Stats when bills exist
+                VStack(spacing: 16) {
+                    Text("\(bills.count)")
+                        .font(.system(size: 72, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                    
+                    Text("Bills split")
+                        .font(.title3)
+                        .foregroundColor(.secondary)
+                    
+                    // Progress circle with bill count
+                    ZStack {
+                        Circle()
+                            .stroke(Color.secondary.opacity(0.2), lineWidth: 8)
+                            .frame(width: 120, height: 120)
+                        
+                        Circle()
+                            .trim(from: 0, to: min(Double(bills.count) / 100.0, 1.0))
+                            .stroke(Color.blue, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                            .frame(width: 120, height: 120)
+                            .rotationEffect(.degrees(-90))
+                        
+                        Image(systemName: "receipt")
+                            .font(.system(size: 32))
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
+    
+    // MARK: - Recently Uploaded Section
+    private var recentlyUploadedSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Recently uploaded")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+            }
+            
+            if bills.isEmpty {
+                // Empty state for recently uploaded
+                VStack(spacing: 12) {
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 40))
+                        .foregroundColor(.secondary.opacity(0.5))
+                    
+                    Text("Tap + to add your first receipt")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
+            } else {
+                LazyVStack(spacing: 12) {
+                    ForEach(bills.prefix(5)) { bill in
+                        BillRowView(bill: bill) {
+                            toggleFavorite(for: bill)
+                        }
+                    }
                 }
             }
-            
-            Spacer()
-            
-            // Quick Start Instructions
-            VStack(spacing: 16) {
-                Text("Get Started:")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                
-                HStack(spacing: 24) {
-                    QuickStartItem(
-                        icon: "camera.fill",
-                        text: "Snap a photo",
-                        color: .blue
-                    )
-                    
-                    QuickStartItem(
-                        icon: "photo.on.rectangle",
-                        text: "Choose from gallery",
-                        color: .green
-                    )
-                    
-                    QuickStartItem(
-                        icon: "square.and.pencil",
-                        text: "Enter manually",
-                        color: .orange
-                    )
-                }
-            }
-            .padding(.bottom, 120) // Space for floating buttons
         }
-        .padding(.horizontal, 20)
     }
     
-    // MARK: - Bills List View
-    private var billsListView: some View {
-        List(bills) { bill in
-            BillRowView(bill: bill)
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+    // MARK: - FAB Menu Overlay
+    private var fabMenuOverlay: some View {
+        VStack(spacing: 16) {
+            ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
+                FABMenuItemView(option: option) {
+                    handleFABMenuSelection(option)
+                }
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .trailing).combined(with: .opacity)
+                ))
+            }
         }
-        .listStyle(InsetGroupedListStyle())
-        .padding(.bottom, 100) // Space for floating buttons
+        .offset(y: -80)
+    }
+    
+    // MARK: - Helper Functions
+    private func toggleFavorite(for bill: Bill) {
+        if let index = bills.firstIndex(where: { $0.id == bill.id }) {
+            bills[index].isFavorited.toggle()
+        }
+    }
+    
+    private func handleFABMenuSelection(_ option: FABMenuOption) {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            showFABMenu = false
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            switch option {
+            case .scanReceipt:
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    selectedSource = .camera
+                }
+            case .photoLibrary:
+                selectedSource = .photoLibrary
+            case .enterManually:
+                showManualEntry = true
+            case .savedReceipts:
+                showSavedReceipts = true
+            }
+        }
     }
 }
 
 // MARK: - Supporting Views
 
-struct FloatingActionButton: View {
-    let icon: String
-    let label: String
-    let color: Color
-    let position: HorizontalAlignment
-    let action: (() -> Void)?
-    
-    init(icon: String, label: String, color: Color, position: HorizontalAlignment, action: (() -> Void)? = nil) {
-        self.icon = icon
-        self.label = label
-        self.color = color
-        self.position = position
-        self.action = action
-    }
+struct FABMenuItemView: View {
+    let option: FABMenuOption
+    let action: () -> Void
     
     var body: some View {
-        Button(action: { action?() }) {
-            VStack(spacing: 8) {
-                Circle()
-                    .fill(color)
-                    .frame(width: 56, height: 56)
-                    .overlay(
-                        Image(systemName: icon)
-                            .font(.system(size: 24, weight: .medium))
-                            .foregroundColor(.white)
-                    )
-                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                
-                Text(label)
-                    .font(.caption)
-                    .fontWeight(.medium)
+        HStack {
+            Spacer()
+            
+            HStack(spacing: 12) {
+                Text(option.rawValue)
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(25)
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                
+                Button(action: action) {
+                    Image(systemName: option.icon)
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 48, height: 48)
+                        .background(option.color)
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                }
             }
         }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-struct QuickStartItem: View {
-    let icon: String
-    let text: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 24, weight: .medium))
-                .foregroundColor(color)
-                .frame(width: 40, height: 40)
-            
-            Text(text)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
     }
 }
 
 struct BillRowView: View {
     let bill: Bill
+    let onFavoriteToggle: () -> Void
     
     var body: some View {
         HStack(spacing: 16) {
@@ -246,18 +355,20 @@ struct BillRowView: View {
                     .cornerRadius(8)
             } else {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.secondary.opacity(0.2))
+                    .fill(Color.secondary.opacity(0.1))
                     .frame(width: 60, height: 60)
                     .overlay(
                         Image(systemName: "doc.text")
+                            .font(.system(size: 24))
                             .foregroundColor(.secondary)
                     )
             }
             
             // Bill Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(bill.title)
                     .font(.headline)
+                    .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 
                 Text("$\(bill.totalAmount, specifier: "%.2f") • \(bill.participants) people")
@@ -271,11 +382,91 @@ struct BillRowView: View {
             
             Spacer()
             
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.secondary)
+            // Favorite Button
+            Button(action: onFavoriteToggle) {
+                Image(systemName: bill.isFavorited ? "heart.fill" : "heart")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(bill.isFavorited ? .pink : .secondary)
+            }
+            .buttonStyle(PlainButtonStyle())
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.02), radius: 1, x: 0, y: 1)
+    }
+}
+
+// MARK: - Saved Receipts View
+
+struct SavedReceiptsView: View {
+    @Binding var bills: [Bill]
+    @Environment(\.dismiss) private var dismiss
+    
+    private var savedBills: [Bill] {
+        bills.filter { $0.isFavorited }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                if savedBills.isEmpty {
+                    // Empty state
+                    VStack(spacing: 24) {
+                        Spacer()
+                        
+                        Image(systemName: "heart.slash")
+                            .font(.system(size: 60, weight: .thin))
+                            .foregroundColor(.secondary)
+                        
+                        VStack(spacing: 8) {
+                            Text("No Saved Receipts")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                            
+                            Text("Tap the heart icon on any receipt to save it here")
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+                        }
+                        
+                        Spacer()
+                    }
+                } else {
+                    // Saved bills list
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(savedBills) { bill in
+                                BillRowView(bill: bill) {
+                                    toggleFavorite(for: bill)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 16)
+                    }
+                }
+            }
+            .navigationTitle("Saved Receipts")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+    }
+    
+    private func toggleFavorite(for bill: Bill) {
+        if let index = bills.firstIndex(where: { $0.id == bill.id }) {
+            bills[index].isFavorited.toggle()
+        }
     }
 }
 

@@ -30,7 +30,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		3C8E35072E4BCEAD00E1E44B /* Exceptions for "TabTogether" folder in "TabTogether" target */ = {
+		3C8C30322E4C2B240082D623 /* Exceptions for "TabTogether" folder in "TabTogether" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -43,7 +43,7 @@
 		3CABC3BE2E4BB40D0079E562 /* TabTogether */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				3C8E35072E4BCEAD00E1E44B /* Exceptions for "TabTogether" folder in "TabTogether" target */,
+				3C8C30322E4C2B240082D623 /* Exceptions for "TabTogether" folder in "TabTogether" target */,
 			);
 			path = TabTogether;
 			sourceTree = "<group>";
