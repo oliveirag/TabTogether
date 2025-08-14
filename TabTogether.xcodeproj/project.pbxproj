@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3C8C308C2E4E6FC90082D623 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 3C8C308B2E4E6FC90082D623 /* FirebaseAuth */; };
+		3C8C308E2E4E6FC90082D623 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 3C8C308D2E4E6FC90082D623 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		3CABC3CE2E4BB40E0079E562 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +70,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C8C308C2E4E6FC90082D623 /* FirebaseAuth in Frameworks */,
+				3C8C308E2E4E6FC90082D623 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +132,8 @@
 			);
 			name = TabTogether;
 			packageProductDependencies = (
+				3C8C308B2E4E6FC90082D623 /* FirebaseAuth */,
+				3C8C308D2E4E6FC90082D623 /* FirebaseFirestore */,
 			);
 			productName = TabTogether;
 			productReference = 3CABC3BC2E4BB40D0079E562 /* TabTogether.app */;
@@ -626,6 +635,19 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3C8C308B2E4E6FC90082D623 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3C8C30332E4C32EC0082D623 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		3C8C308D2E4E6FC90082D623 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3C8C30332E4C32EC0082D623 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3CABC3B42E4BB40D0079E562 /* Project object */;
 }

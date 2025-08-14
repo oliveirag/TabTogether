@@ -59,26 +59,69 @@ struct ContentView: View {
             // Home Tab
             homeView
                 .tabItem {
-                    Image(systemName: "house")
+                    Image(systemName: selectedTab == 0 ? "house.fill" : "house")
+                        .font(.system(size: 16, weight: .medium))
                     Text("Home")
+                        .font(.system(size: 8, weight: .medium))
                 }
                 .tag(0)
             
             // Saved Tab
             savedTabView
                 .tabItem {
-                    Image(systemName: "heart")
+                    Image(systemName: selectedTab == 1 ? "heart.fill" : "heart")
+                        .font(.system(size: 16, weight: .medium))
                     Text("Saved")
+                        .font(.system(size: 8, weight: .medium))
                 }
                 .tag(1)
             
             // Settings Tab
             settingsTabView
                 .tabItem {
-                    Image(systemName: "gearshape")
+                    Image(systemName: selectedTab == 2 ? "gearshape.fill" : "gearshape")
+                        .font(.system(size: 16, weight: .medium))
                     Text("Settings")
+                        .font(.system(size: 8, weight: .medium))
                 }
                 .tag(2)
+        }
+        .accentColor(.black) // Ensures selected state is black like Cal AI
+        .onAppear {
+            // Customize tab bar appearance to match Cal AI design
+            let appearance = UITabBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor.systemBackground
+            
+            // Remove any border or shadow
+            appearance.shadowColor = UIColor.clear
+            appearance.shadowImage = UIImage()
+            
+            // Very compact text appearance for red box area
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+                .foregroundColor: UIColor.systemGray2,
+                .font: UIFont.systemFont(ofSize: 8, weight: .medium)
+            ]
+            appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+                .foregroundColor: UIColor.label,
+                .font: UIFont.systemFont(ofSize: 8, weight: .semibold)
+            ]
+            
+            // Adjust icon colors
+            appearance.stackedLayoutAppearance.normal.iconColor = UIColor.systemGray2
+            appearance.stackedLayoutAppearance.selected.iconColor = UIColor.label
+            
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+            
+            // Force tabs into extremely compact red box area
+            UITabBar.appearance().itemSpacing = -60 // Extremely negative spacing
+            UITabBar.appearance().itemPositioning = .centered
+            UITabBar.appearance().itemWidth = 40 // Very small item width
+            
+            // Add custom insets to center the compact tab group
+            appearance.stackedLayoutAppearance.normal.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: 2)
+            appearance.stackedLayoutAppearance.selected.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: 2)
         }
         .overlay(alignment: .bottomTrailing) {
             // Plus FAB - positioned to match Cal AI design
@@ -88,21 +131,21 @@ struct ContentView: View {
                 }
             }) {
                 Image(systemName: showFABMenu ? "xmark" : "plus")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white)
-                    .frame(width: 50, height: 50)
+                    .frame(width: 48, height: 48)
                     .background(Color.black)
                     .clipShape(Circle())
                     .rotationEffect(.degrees(showFABMenu ? 45 : 0))
-                    .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                    .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 4)
             }
             .padding(.trailing, 16)
-            .padding(.bottom, 34) // Just above tab bar like Cal AI
+            .padding(.bottom, 59) // Align middle of button with tab bar divider
         }
         .overlay(alignment: .bottomTrailing) {
             // FAB Menu Items
             if showFABMenu {
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     ForEach(FABMenuOption.allCases.reversed(), id: \.self) { option in
                         FABMenuItemView(option: option) {
                             handleFABMenuSelection(option)
@@ -113,8 +156,8 @@ struct ContentView: View {
                         ))
                     }
                 }
-                .padding(.trailing, 16) // Match FAB alignment
-                .padding(.bottom, 144) // Above FAB button (34 + 50 + 60 spacing)
+                .padding(.trailing, 16) // Move more to the right while staying on screen
+                .padding(.bottom, 123) // Above FAB button (59 + 48 + 16 spacing)
             }
         }
         .sheet(isPresented: $showSavedReceipts) {
@@ -378,6 +421,7 @@ struct FABMenuItemView: View {
     
     var body: some View {
         HStack(spacing: 12) {
+            // Push text to the right by using a spacer-like approach
             Text(option.rawValue)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.primary)
@@ -386,10 +430,11 @@ struct FABMenuItemView: View {
                 .background(Color(.systemBackground))
                 .cornerRadius(25)
                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .fixedSize() // Prevent text from expanding
             
             Button(action: action) {
                 Image(systemName: option.icon)
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white)
                     .frame(width: 48, height: 48)
                     .background(option.color)
@@ -397,6 +442,7 @@ struct FABMenuItemView: View {
                     .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .trailing) // Align everything to the right
     }
 }
 

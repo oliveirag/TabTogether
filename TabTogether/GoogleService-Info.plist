@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyBOQWBNElG4woRT8xI2CLZ5xeDZoaFQkoc</string>
+	<string>AIzaSyAPvkMa4XBUaBPbhVcnqUYEKCefoWIg9sQ</string>
 	<key>GCM_SENDER_ID</key>
-	<string>976618810848</string>
+	<string>695194639944</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>SultanandGui.TabTogether</string>
 	<key>PROJECT_ID</key>
-	<string>tab-together-71af3</string>
+	<string>tabtogether-3b8ca</string>
 	<key>STORAGE_BUCKET</key>
-	<string>tab-together-71af3.firebasestorage.app</string>
+	<string>tabtogether-3b8ca.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:976618810848:ios:3914bf1f1146c63c480f85</string>
+	<string>1:695194639944:ios:b8ad83db50b6ec08ea427d</string>
 </dict>
 </plist>
